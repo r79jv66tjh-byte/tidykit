@@ -1,0 +1,131 @@
+{
+  "name": "TidyKit",
+  "description": "Windows aufräumen: Programmreste und leere Ordner finden, Autostart prüfen und schalten, Dateien massenhaft umbenennen, zwei Ordner vergleichen und abgleichen. Löschen nur in den Papierkorb; jede Änderung landet im Verlauf und ist mit 'undo' rückgängig zu machen.",
+  "category": "Aufräumen & Ordnung",
+  "commands": [
+    {
+      "name": "leftovers",
+      "description": "Sucht Reste deinstallierter Programme und leere Ordner in AppData, ProgramData und Programme (oder in --root). Liefert Pfad, Sicherheit (hoch/mittel/niedrig), Größe und Begründung. Dauert einige Sekunden.",
+      "run": ["python", "cli.py", "leftovers", "--json"],
+      "args": [
+        {"name": "root", "flag": "--root", "type": "string", "required": false, "description": "Nur diese Ordner durchsuchen (mehrere mit ;). Ohne: Standardordner."},
+        {"name": "min_confidence", "flag": "--min-confidence", "type": "string", "required": false, "description": "hoch, mittel (Standard) oder niedrig – zeigt Funde ab dieser Sicherheit."},
+        {"name": "limit", "flag": "--limit", "type": "integer", "required": false, "description": "Höchstens so viele Funde ausgeben."}
+      ],
+      "readonly": true
+    },
+    {
+      "name": "empty-dirs",
+      "description": "Findet leere Ordner (ohne Dateien, auch verschachtelt) unterhalb eines Ordners.",
+      "run": ["python", "cli.py", "empty-dirs", "--json"],
+      "args": [
+        {"name": "folder", "flag": "--folder", "type": "string", "required": true, "description": "Zu durchsuchender Ordner."}
+      ],
+      "readonly": true
+    },
+    {
+      "name": "trash",
+      "description": "Legt Dateien/Ordner in den Windows-Papierkorb (nie endgültig). Systemordner und Hauptordner werden verweigert. Erst mit dry_run prüfen; Ergebnis enthält undo_id.",
+      "run": ["python", "cli.py", "trash", "--json"],
+      "args": [
+        {"name": "paths", "flag": "--paths", "type": "string", "required": true, "description": "Absolute Pfade, mehrere mit ; getrennt."},
+        {"name": "dry_run", "flag": "--dry-run", "type": "boolean", "required": false, "description": "Nur Vorschau, nichts löschen."}
+      ],
+      "readonly": false
+    },
+    {
+      "name": "startup-list",
+      "description": "Listet Autostart-Einträge (Registry Run, Autostart-Ordner, Aufgabenplanung) mit Status an/aus und Bewertung (Verwaist, Verdächtig, Prüfen, Optional, Normal, System).",
+      "run": ["python", "cli.py", "startup-list", "--json"],
+      "args": [
+        {"name": "include_microsoft", "flag": "--include-microsoft", "type": "boolean", "required": false, "description": "Auch Windows-Aufgaben unter \\Microsoft\\ zeigen."},
+        {"name": "no_signatures", "flag": "--no-signatures", "type": "boolean", "required": false, "description": "Signaturprüfung auslassen (schneller)."},
+        {"name": "only_enabled", "flag": "--only-enabled", "type": "boolean", "required": false, "description": "Nur aktive Einträge."}
+      ],
+      "readonly": true
+    },
+    {
+      "name": "startup-set",
+      "description": "Schaltet einen Autostart-Eintrag an oder aus (wie Task-Manager, Eintrag bleibt erhalten, alter Zustand wird gesichert). Name aus startup-list. Erst mit dry_run prüfen; Ergebnis enthält undo_id.",
+      "run": ["python", "cli.py", "startup-set", "--json"],
+      "args": [
+        {"name": "name", "flag": "--name", "type": "string", "required": true, "description": "Exakter Name des Eintrags aus startup-list."},
+        {"name": "state", "flag": "--state", "type": "string", "required": true, "description": "on oder off."},
+        {"name": "source", "flag": "--source", "type": "string", "required": false, "description": "Teil der Quelle, falls der Name mehrfach vorkommt (z. B. Benutzer, Aufgabenplanung)."},
+        {"name": "dry_run", "flag": "--dry-run", "type": "boolean", "required": false, "description": "Nur Vorschau, nichts ändern."}
+      ],
+      "readonly": false
+    },
+    {
+      "name": "rename",
+      "description": "Benennt Dateien eines Ordners nach Regeln um (Reihenfolge: trim, find/replace, regex, case, template). Konflikte blockieren. Erst mit dry_run die Vorschau ansehen; Ergebnis enthält undo_id.",
+      "run": ["python", "cli.py", "rename", "--json"],
+      "args": [
+        {"name": "folder", "flag": "--folder", "type": "string", "required": true, "description": "Ordner mit den Dateien."},
+        {"name": "filter", "flag": "--filter", "type": "string", "required": false, "description": "Dateifilter, z. B. *.jpg;*.png (Standard *)."},
+        {"name": "recursive", "flag": "--recursive", "type": "boolean", "required": false, "description": "Unterordner einbeziehen."},
+        {"name": "sort", "flag": "--sort", "type": "string", "required": false, "description": "Reihenfolge für Nummern: name, date oder size."},
+        {"name": "include_ext", "flag": "--include-ext", "type": "boolean", "required": false, "description": "Regeln auch auf die Dateiendung anwenden."},
+        {"name": "find", "flag": "--find", "type": "string", "required": false, "description": "Zu ersetzender Text."},
+        {"name": "replace", "flag": "--replace", "type": "string", "required": false, "description": "Ersatz für --find."},
+        {"name": "regex", "flag": "--regex", "type": "string", "required": false, "description": "Regulärer Ausdruck."},
+        {"name": "regex_replace", "flag": "--regex-replace", "type": "string", "required": false, "description": "Ersatz für --regex (Gruppen mit \\1 oder $1)."},
+        {"name": "case_sensitive", "flag": "--case-sensitive", "type": "boolean", "required": false, "description": "Groß/Klein bei find/regex beachten."},
+        {"name": "case", "flag": "--case", "type": "string", "required": false, "description": "lower, upper, title oder sentence."},
+        {"name": "template", "flag": "--template", "type": "string", "required": false, "description": "Neuer Name mit Platzhaltern {name} {n} {n:3} {datum} {datum:%Y%m%d} {ordner} {ext}."},
+        {"name": "start", "flag": "--start", "type": "integer", "required": false, "description": "Startnummer für {n} (Standard 1)."},
+        {"name": "step", "flag": "--step", "type": "integer", "required": false, "description": "Schrittweite für {n} (Standard 1)."},
+        {"name": "trim", "flag": "--trim", "type": "boolean", "required": false, "description": "Doppelte Leerzeichen und Leerzeichen am Rand entfernen."},
+        {"name": "rules", "flag": "--rules", "type": "string", "required": false, "description": "Statt Einzelflags: JSON-Liste, z. B. [{\"kind\":\"regex\",\"pattern\":\"x\",\"repl\":\"y\"}]; kinds: replace, regex, pattern, case, trim."},
+        {"name": "dry_run", "flag": "--dry-run", "type": "boolean", "required": false, "description": "Nur Vorschau, nichts umbenennen."}
+      ],
+      "readonly": false
+    },
+    {
+      "name": "compare",
+      "description": "Vergleicht zwei Ordner rekursiv und listet Unterschiede (nur in A/B, A/B neuer, unterschiedlich).",
+      "run": ["python", "cli.py", "compare", "--json"],
+      "args": [
+        {"name": "a", "flag": "--a", "type": "string", "required": true, "description": "Ordner A."},
+        {"name": "b", "flag": "--b", "type": "string", "required": true, "description": "Ordner B."},
+        {"name": "hash", "flag": "--hash", "type": "boolean", "required": false, "description": "Inhalt per SHA-256 prüfen (langsamer, genauer)."},
+        {"name": "show_equal", "flag": "--show-equal", "type": "boolean", "required": false, "description": "Auch gleiche Dateien ausgeben."}
+      ],
+      "readonly": true
+    },
+    {
+      "name": "sync",
+      "description": "Gleicht zwei Ordner ab: a2b spiegelt A nach B, b2a umgekehrt, both übernimmt jeweils das Neuere. Überschriebenes/Gelöschtes geht in den Papierkorb. Erst mit dry_run prüfen; Ergebnis enthält undo_id.",
+      "run": ["python", "cli.py", "sync", "--json"],
+      "args": [
+        {"name": "a", "flag": "--a", "type": "string", "required": true, "description": "Ordner A."},
+        {"name": "b", "flag": "--b", "type": "string", "required": true, "description": "Ordner B."},
+        {"name": "mode", "flag": "--mode", "type": "string", "required": false, "description": "a2b (Standard), b2a oder both."},
+        {"name": "delete_extra", "flag": "--delete-extra", "type": "boolean", "required": false, "description": "Bei a2b/b2a Überzähliges im Ziel in den Papierkorb legen."},
+        {"name": "hash", "flag": "--hash", "type": "boolean", "required": false, "description": "Inhalt per SHA-256 vergleichen."},
+        {"name": "dry_run", "flag": "--dry-run", "type": "boolean", "required": false, "description": "Nur Vorschau, nichts kopieren oder löschen."}
+      ],
+      "readonly": false
+    },
+    {
+      "name": "history",
+      "description": "Zeigt den Verlauf aller Änderungen (auch aus der GUI) mit IDs für undo.",
+      "run": ["python", "cli.py", "history", "--json"],
+      "args": [
+        {"name": "limit", "flag": "--limit", "type": "integer", "required": false, "description": "Anzahl Einträge (Standard 20)."},
+        {"name": "details", "flag": "--details", "type": "boolean", "required": false, "description": "Einzelschritte mit ausgeben."}
+      ],
+      "readonly": true
+    },
+    {
+      "name": "undo",
+      "description": "Macht eine Änderung aus dem Verlauf rückgängig (Papierkorb zurücklegen, zurückbenennen, Autostart-Zustand wiederherstellen). ID aus history oder undo_id.",
+      "run": ["python", "cli.py", "undo", "--json"],
+      "args": [
+        {"name": "id", "flag": "--id", "type": "string", "required": true, "description": "ID des Verlaufseintrags."},
+        {"name": "dry_run", "flag": "--dry-run", "type": "boolean", "required": false, "description": "Nur zeigen, was zurückgenommen würde."}
+      ],
+      "readonly": false
+    }
+  ]
+}
