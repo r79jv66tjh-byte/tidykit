@@ -22,6 +22,20 @@ class TrashTests(TempDirCase):
         self.assertEqual(read(f), "hallo")
         self.assertTrue(os.path.isfile(self.p("ordner", "b.txt")))
 
+    def test_restore_with_short_path_name(self):
+        # Windows can hand out 8.3 names (C:\\Users\\RUNNER~1); the Recycle Bin stores the long name.
+        import ctypes
+        long_dir = self.p("Langer Ordnername")
+        write(os.path.join(long_dir, "c.txt"), "kurz")
+        buf = ctypes.create_unicode_buffer(260)
+        ctypes.windll.kernel32.GetShortPathNameW(long_dir, buf, 260)
+        if os.path.normcase(buf.value) == os.path.normcase(long_dir):
+            self.skipTest("Laufwerk erzeugt keine 8.3-Namen")
+        short_file = os.path.join(buf.value, "c.txt")
+        t = trash.send_to_trash(short_file)
+        trash.restore_from_trash(short_file, t)
+        self.assertEqual(read(os.path.join(long_dir, "c.txt")), "kurz")
+
     def test_restore_refuses_to_overwrite(self):
         f = self.p("a.txt")
         write(f, "alt")
