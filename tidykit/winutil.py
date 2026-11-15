@@ -128,7 +128,13 @@ def same_path(a: str, b: str) -> bool:
     return os.path.normcase(os.path.normpath(a)) == os.path.normcase(os.path.normpath(b))
 
 
+def comparable_path(path: str) -> str:
+    # Windows hands out 8.3 names (C:\\Users\\RUNNER~1) next to long ones; realpath expands them,
+    # and for a path that no longer exists it resolves the part that still does.
+    return os.path.normcase(os.path.realpath(path))
+
+
 def is_within(child: str, parent: str) -> bool:
-    c = os.path.normcase(os.path.normpath(child))
-    p = os.path.normcase(os.path.normpath(parent)).rstrip("\\")
+    c = comparable_path(child)
+    p = comparable_path(parent).rstrip("\\")
     return c == p or c.startswith(p + "\\")

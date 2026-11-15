@@ -13,7 +13,7 @@ import time
 from ctypes import wintypes
 from dataclasses import dataclass
 
-from .winutil import current_user_sid
+from .winutil import comparable_path, current_user_sid
 
 FO_DELETE = 3
 FOF_SILENT = 0x0004
@@ -137,8 +137,8 @@ def find_in_trash(original: str, since: float | None = None) -> TrashEntry | Non
     Zeitpunkt gewählt – also genau der, den diese Aktion erzeugt hat, auch wenn derselbe
     Pfad später noch einmal gelöscht wurde. Ohne `since` der neueste.
     """
-    key = os.path.normcase(os.path.abspath(original))
-    matches = [e for e in list_trash(original) if os.path.normcase(e.original) == key]
+    key = comparable_path(original)
+    matches = [e for e in list_trash(original) if comparable_path(e.original) == key]
     if since is not None:
         matches = [e for e in matches if e.deleted_at >= since - 1]
         return min(matches, key=lambda e: e.deleted_at, default=None)
