@@ -143,6 +143,18 @@ class SyncTests(TempDirCase):
 
 
 class LeftoverTests(TempDirCase):
+    def test_is_within_matches_short_and_long_names(self):
+        import ctypes
+        from tidykit.winutil import is_within
+        long_dir = self.p("Langer Ordnername")
+        write(os.path.join(long_dir, "x.txt"))
+        buf = ctypes.create_unicode_buffer(260)
+        ctypes.windll.kernel32.GetShortPathNameW(long_dir, buf, 260)
+        if os.path.normcase(buf.value) == os.path.normcase(long_dir):
+            self.skipTest("Laufwerk erzeugt keine 8.3-Namen")
+        self.assertTrue(is_within(os.path.join(buf.value, "x.txt"), long_dir))
+        self.assertTrue(is_within(os.path.join(long_dir, "x.txt"), buf.value))
+
     def setUp(self):
         super().setUp()
         r = self.p("AppData")
