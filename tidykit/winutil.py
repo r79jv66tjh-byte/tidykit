@@ -124,10 +124,6 @@ def open_in_explorer(path: str) -> None:
             os.startfile(parent)
 
 
-def same_path(a: str, b: str) -> bool:
-    return os.path.normcase(os.path.normpath(a)) == os.path.normcase(os.path.normpath(b))
-
-
 def comparable_path(path: str) -> str:
     # Windows hands out 8.3 names (C:\\Users\\RUNNER~1) next to long ones; realpath expands them,
     # and for a path that no longer exists it resolves the part that still does.

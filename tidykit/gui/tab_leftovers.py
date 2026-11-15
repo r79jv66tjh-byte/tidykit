@@ -8,7 +8,7 @@ from tkinter import filedialog, ttk
 from .. import leftovers
 from ..trash import send_to_trash
 from ..winutil import fmt_time, human_size, open_in_explorer
-from .common import (CHECK_OFF, CHECK_ON, PreviewDialog, checked, enable_checkboxes,
+from .common import (CHECK_OFF, PreviewDialog, checked, enable_checkboxes,
                      make_tree, set_all, show_errors)
 
 

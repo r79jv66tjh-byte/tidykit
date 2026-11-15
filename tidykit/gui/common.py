@@ -16,7 +16,6 @@ class Background:
     def __init__(self, root: tk.Misc):
         self.root = root
         self.q: queue.Queue = queue.Queue()
-        self.busy = 0
         self._poll()
 
     def _poll(self):
@@ -38,8 +37,6 @@ class Background:
         self.q.put((cb, args))
 
     def run(self, func, on_done, on_error=None):
-        self.busy += 1
-
         def worker():
             try:
                 result = func()
@@ -51,11 +48,9 @@ class Background:
         threading.Thread(target=worker, daemon=True).start()
 
     def _finish_ok(self, result, cb):
-        self.busy -= 1
         cb(result)
 
     def _finish_err(self, exc, cb):
-        self.busy -= 1
         if cb:
             cb(exc)
         else:
