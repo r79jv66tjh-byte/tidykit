@@ -130,6 +130,12 @@ def list_trash(drive_path: str = "C:\\") -> list[TrashEntry]:
     return entries
 
 
+def _comparable(path: str) -> str:
+    # The Recycle Bin stores long names; realpath also expands 8.3 names like RUNNER~1,
+    # and for a deleted file it resolves the part of the path that still exists.
+    return os.path.normcase(os.path.realpath(path))
+
+
 def find_in_trash(original: str, since: float | None = None) -> TrashEntry | None:
     """Papierkorb-Eintrag für den Originalpfad.
 
@@ -137,8 +143,8 @@ def find_in_trash(original: str, since: float | None = None) -> TrashEntry | Non
     Zeitpunkt gewählt – also genau der, den diese Aktion erzeugt hat, auch wenn derselbe
     Pfad später noch einmal gelöscht wurde. Ohne `since` der neueste.
     """
-    key = os.path.normcase(os.path.abspath(original))
-    matches = [e for e in list_trash(original) if os.path.normcase(e.original) == key]
+    key = _comparable(original)
+    matches = [e for e in list_trash(original) if _comparable(e.original) == key]
     if since is not None:
         matches = [e for e in matches if e.deleted_at >= since - 1]
         return min(matches, key=lambda e: e.deleted_at, default=None)
